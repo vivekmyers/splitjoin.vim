@@ -21,8 +21,8 @@ function! sj#tex#SplitBlock()
   endif
 
   let [_match, open, body, close; _rest] = match
-  let body = sj#Trim(substitute(body, '\\\\', '\\\\'."\n", 'g'))
-  let body = sj#Trim(substitute(body, '\s*\\item', "\n".'\\item', 'g'))
+  let body = substitute(body, '\\\\', '\\\\'."\n", 'g')->trim()
+  let body = substitute(body, '\s*\\item', "\n".'\\item', 'g')->trim()
   let replacement = open."\n".body."\n".close
 
   call sj#ReplaceByPosition(start, end, replacement)
