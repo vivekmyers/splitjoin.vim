@@ -73,7 +73,7 @@ function! sj#tex#JoinBlock()
 endfunction
 
 function! sj#tex#SplitCommand()
-  let [start, end] = sj#LocateBracesOnLine('{', '}')
+  let [start, end] = sj#LocateBracesOnLine('{', '}', ['texComment'])
   if start < 0
     return 0
   endif
@@ -85,17 +85,16 @@ endfunction
 
 function! sj#tex#JoinCommand()
   exe "silent! normal! va{o\e"
-  if search('{\zs%\s*$', 'c', line('.')) <= 0
-    return 0
-  endif
+  " if search('{\zs%\s*$', 'c', line('.')) <= 0
+  "   return 0
+  " endif
   let body = sj#GetMotion('Vi{')
 
   let lines = split(body, "\n")
-  let lines = sj#TrimList(lines)
   let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
+  let lines = sj#TrimList(lines)
   let body  = sj#Trim(join(lines, ' '))
-  let body  = substitute(body, ',\s*$', '', '')
-  let body  = substitute(body, '^%\s*', '', '')
+  let body  = substitute(body, '%.*', '', '')
 
-  call sj#ReplaceMotion('Va{', '{' . body . '}'."\n")
+  call sj#ReplaceMotion('va{', '{' . body . '}'."\n")
 endfunction
