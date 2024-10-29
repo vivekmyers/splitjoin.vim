@@ -62,7 +62,7 @@ function! sj#tex#JoinBlock()
     let body = '\item '.join(lines, ' \item ')
   endif
 
-  let replacement = open." ".body." ".close
+  let replacement =  sj#Trim(open)." ".body." ".sj#Trim(close)
 
   call sj#ReplaceByPosition(start, end, replacement)
   return 1
