@@ -8,9 +8,9 @@ function! sj#tex#SplitBlock()
   endif
 
   let start = getpos('.')
-  if searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', '') != lno
-    return 0
-  endif
+  call searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', '')
+  "   return 0
+  " endif
   let end = getpos('.')
 
   let block = sj#GetByPosition(start, end)
@@ -74,6 +74,7 @@ function! sj#tex#JoinBlock()
 endfunction
 
 function! sj#tex#SplitCommand()
+  exe "silent! normal! va{o\e"
   let [start, end] = sj#LocateBracesOnLine('{', '}', ['texComment'])
   if start < 0
     return 0
