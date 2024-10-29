@@ -21,8 +21,8 @@ function! sj#tex#SplitBlock()
   endif
 
   let [_match, open, body, close; _rest] = match
-  let body = substitute(body, '\\\\\ *\zs'."[^ \n\r]", "\n&", 'g')
-  let body = substitute(body, "[^ \n\r]".'\ze *\\item', "&\n", 'g')
+  let body = substitute(body, '\\\\\ *\zs'."[^ \n\r%]", "\n&", 'g')
+  let body = substitute(body, "[^ \n\r%]".'\ze *\\item', "&\n", 'g')
   let replacement = open."\n".sj#Trim(body)."\n".close
 
   call sj#ReplaceByPosition(start, end, replacement)
@@ -58,8 +58,12 @@ function! sj#tex#JoinBlock()
   let body = join(lines, '\\ ')
 
   if body =~ '\\item'
-    let lines = sj#TrimList(split(body, '\s*\\item\s*'))
-    let body = '\item '.join(lines, ' \item ')
+    let lines = sj#TrimList(split(body, '\\item'))
+    if body =~ '^\s*\\item'
+      let body = '\item '.join(lines, ' \item ')
+    else
+      let body = join(lines, ' \item ')
+    endif
   endif
 
   let replacement =  sj#Trim(open)." ".body." ".sj#Trim(close)
