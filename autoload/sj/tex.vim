@@ -79,11 +79,12 @@ function! sj#tex#SplitCommand()
   endif
 
   let contents = sj#GetCols(start + 1, end - 1)
-  call sj#ReplaceCols(start + 1, end - 1, "%\n".contents."\n")
+  call sj#ReplaceCols(start + 1, end - 1, "%\n".contents."%\n")
   return 1
 endfunction
 
 function! sj#tex#JoinCommand()
+  exe "silent! normal! va{o\e"
   if search('{\zs%\s*$', 'c', line('.')) <= 0
     return 0
   endif
@@ -91,9 +92,10 @@ function! sj#tex#JoinCommand()
 
   let lines = split(body, "\n")
   let lines = sj#TrimList(lines)
+  let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
   let body  = sj#Trim(join(lines, ' '))
   let body  = substitute(body, ',\s*$', '', '')
   let body  = substitute(body, '^%\s*', '', '')
 
-  call sj#ReplaceMotion('Va{', '{' . body . '}')
+  call sj#ReplaceMotion('Va{', '{' . body . '}'."\n")
 endfunction
