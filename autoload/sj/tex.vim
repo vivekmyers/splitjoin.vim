@@ -58,7 +58,7 @@ function! sj#tex#JoinBlock()
   let body = join(lines, '\\ ')
 
   if body =~ '\\item'
-    let lines = sj#TrimList(split(body, '\\item'))
+    let lines = sj#TrimList(split(body, '\s*\\item\s*'))
     let body = '\item '.join(lines, ' \item ')
   endif
 
