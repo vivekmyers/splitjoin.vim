@@ -2,12 +2,13 @@ function! sj#tex#SplitBlock()
   let arg_pattern = '[a-zA-Z*]'
   let opts_pattern = '\%(\%({.\{-}}\)\|\%(\[.\{-}]\)\)*'
 
-  if searchpair('\s*\zs\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bc', '') != line('.')
+  let lno = line('.')
+  if searchpair('\s*\zs\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bc', '') != lno
     return 0
   endif
 
   let start = getpos('.')
-  if searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', '') != line('.')
+  if searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', '') != lno
     return 0
   endif
   let end = getpos('.')
