@@ -74,7 +74,7 @@ function! sj#tex#JoinBlock()
 endfunction
 
 function! sj#tex#SplitCommand()
-  exe "silent! normal! va{o\e"
+  " exe "silent! normal! va{o\e"
   let [start, end] = sj#LocateBracesOnLine('{', '}', ['texComment'])
   if start < 0
     return 0
