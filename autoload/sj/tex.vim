@@ -4,7 +4,10 @@ function! sj#tex#SplitBlock()
 
   let lno = line('.')
   if searchpair('\s*\zs\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bc', '') != lno
-    return 0
+    if search('\s*\\end{', 'cW', lno) > 0
+      silent! exe lno.'substitute/\s*\zs\\end{'.arg_pattern.'\{-}}'.opts_pattern.'\s*$/\r&/e'
+      return 0
+    endif
   endif
 
   let start = getpos('.')
@@ -74,14 +77,15 @@ function! sj#tex#JoinBlock()
 endfunction
 
 function! sj#tex#SplitCommand()
-  " exe "silent! normal! va{o\e"
-  let [start, end] = sj#LocateBracesOnLine('{', '}', ['texComment'])
-  if start < 0
+  let lno = line('.')
+  exe "silent! normal! va{o\e"
+  let startno = getpos("'<")[1]
+  if startno != lno
     return 0
   endif
 
-  let contents = sj#GetCols(start + 1, end - 1)
-  call sj#ReplaceCols(start + 1, end - 1, "%\n".contents."%\n")
+  let contents = sj#GetMotion('vi{')->trim()
+  call sj#ReplaceMotion('va{', "{%\n".contents."%\n}")
   return 1
 endfunction
 
