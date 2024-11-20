@@ -3,17 +3,20 @@ function! sj#tex#SplitBlock()
   let opts_pattern = '\%(\%({.\{-}}\)\|\%(\[.\{-}]\)\)*'
 
   let lno = line('.')
-  if searchpair('\s*\zs\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bc', '') != lno
-    if search('\s*\\end{', 'cW', lno) > 0
-      silent! exe lno.'substitute/\s*\zs\\end{'.arg_pattern.'\{-}}'.opts_pattern.'\s*$/\r&/e'
-      return 0
+  if searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bc', '') != lno
+    if search('\\end{', 'cW', lno + 1) > 0
+      let value = getline('.')
+      let lfirst = substitute(value, '^.*\zs\\end{'.arg_pattern.'\{-}}'.opts_pattern.'.*$', '', '')
+      let lsecond = substitute(value, '\%(\(\t*\)\t\)\?.*\(\\end{'.arg_pattern.'\{-}}'.opts_pattern.'.*$\)', '\1\2', '')
+      call setline('.', lfirst)
+      call append('.', lsecond)
+      return 1
     endif
+    return 0
   endif
 
   let start = getpos('.')
   call searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', '')
-  "   return 0
-  " endif
   let end = getpos('.')
 
   let block = sj#GetByPosition(start, end)
@@ -27,7 +30,7 @@ function! sj#tex#SplitBlock()
   let [_match, open, body, close; _rest] = match
   let body = substitute(body, '\\\\\ *\zs'."[^ \n\r%]", "\n&", 'g')
   let body = substitute(body, "[^ \n\r%]".'\ze *\\item', "&\n", 'g')
-  let replacement = open."\n".sj#Trim(body)."\n".close
+  let replacement = sj#Trim(open)."\n".sj#Trim(body)."\n".sj#Trim(close)
 
   call sj#ReplaceByPosition(start, end, replacement)
   return 1
@@ -102,5 +105,5 @@ function! sj#tex#JoinCommand()
   let body  = sj#Trim(join(lines, ' '))
   let body  = substitute(body, '%.*', '', '')
 
-  call sj#ReplaceMotion('va{', '{' . body . '}'."\n")
+  call sj#ReplaceMotion('va{', '{' . body . '}')
 endfunction
