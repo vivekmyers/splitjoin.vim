@@ -7,7 +7,7 @@ function! sj#tex#SplitBlock()
   if !searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bcW', '')
     return 0
   endif
-  call searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}\zs}', 'W', '')
+  call searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', 'W', '')
   let end = getpos('.')
 
   let block = sj#GetByPosition(start, end)
