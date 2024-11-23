@@ -22,7 +22,7 @@ function! sj#tex#SplitBlock()
   let body = substitute(body, '\\\\\ *\zs'."[^ \n\r%]", "\n&", 'g')
   let body = substitute(body, "[^ \n\r%]".'\ze *\\item', "&\n", 'g')
 
-  let body = substitute(body, '\S.*\zs\\label', "\n&", 'g')
+  let body = substitute(body, '\S[^ \n\r%]*\zs\\label', "\n&", 'g')
 
   let replacement = sj#Trim(open)."\n".sj#Trim(body)."\n".sj#Trim(close)
 
