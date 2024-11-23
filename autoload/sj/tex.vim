@@ -79,9 +79,43 @@ function! sj#tex#JoinBlock()
   return 1
 endfunction
 
+function! sj#tex#SplitArgs()
+  if searchpair('[', '', ']', 'bcnW', '') <= 0
+    return 0
+  endif
+  let contents = sj#GetMotion('vi[')->trim()
+  if empty(contents)
+    return 0
+  endif
+  let contents = contents->split('\n')->map({_, v -> substitute(v, '%.*', '', 'g')})->join('')
+  let contents = contents->substitute(',', ",%\n", 'g')
+  call sj#ReplaceMotion('va[', "[%\n".contents."%\n]")
+  normal vi]oj>
+  return 1
+endfunction
+
+function! sj#tex#JoinArgs()
+  if searchpair('[', '', ']', 'bcnW', '') <= 0
+    return 0
+  endif
+  let body = sj#GetMotion('Vi[')->trim()
+  if empty(body)
+    return 0
+  endif
+  let body = body->substitute('\n\s*,\|,\s*\n', ',', 'g')
+  let lines = split(body, "\n")
+  let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
+  let lines = sj#TrimList(lines)
+  let body  = sj#Trim(join(lines, ' '))
+  call sj#ReplaceMotion('va[', '[' . body . ']')
+endfunction
+
+
 function! sj#tex#SplitCommand()
   let lno = line('.')
-  exe "silent! normal! va{o\e"
+  if searchpair('{', '', '}', 'bcnW', '') != lno || searchpair('\w*{', '', '}', 'ncW', '') != lno
+    return 0
+  endif
   let startno = getpos("'<")[1]
   if startno != lno
     return 0
@@ -93,17 +127,17 @@ function! sj#tex#SplitCommand()
 endfunction
 
 function! sj#tex#JoinCommand()
-  exe "silent! normal! va{o\e"
-  " if search('{\zs%\s*$', 'c', line('.')) <= 0
-  "   return 0
-  " endif
+  if searchpair('{', '', '}', 'bnW', '') <= 0 || searchpair('\w*{', '', '}', 'ncW', '') <= 0
+    return 0
+  endif
   let body = sj#GetMotion('Vi{')
-
+  if empty(body)
+    return 0
+  endif
   let lines = split(body, "\n")
   let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
   let lines = sj#TrimList(lines)
   let body  = sj#Trim(join(lines, ' '))
   let body  = substitute(body, '%.*', '', '')
-
   call sj#ReplaceMotion('va{', '{' . body . '}')
 endfunction
