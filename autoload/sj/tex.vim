@@ -3,10 +3,11 @@ function! sj#tex#SplitBlock()
   let opts_pattern = '\%(\%({.\{-}}\)\|\%(\[.\{-}]\)\)*'
 
   let lno = line('.')
-  if searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bc', '') != lno
-    if search('\\end{', 'cW', lno + 1) > 0
+  if searchpair('\s*\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bnc', '') != lno
+    if search('\S.*\\end{', 'cnW', lno + 1) > 0
+      call search('\S.*\\end{', 'cW', lno + 1)
       let value = getline('.')
-      let lfirst = substitute(value, '^.*\zs\\end{'.arg_pattern.'\{-}}'.opts_pattern.'.*$', '', '')
+      let lfirst = substitute(value, '^.*\S.*\zs\\end{'.arg_pattern.'\{-}}'.opts_pattern.'.*$', '', '')
       let lsecond = substitute(value, '\%(\(\t*\)\t\)\?.*\(\\end{'.arg_pattern.'\{-}}'.opts_pattern.'.*$\)', '\1\2', '')
       call setline('.', lfirst)
       call append('.', lsecond)
@@ -40,13 +41,13 @@ function! sj#tex#JoinBlock()
   let arg_pattern = '[a-zA-Z*]'
   let opts_pattern = '\%(\%({.\{-}}\)\|\%(\[.\{-}]\)\)*'
 
-  if search('\s*\\begin{', 'bcW', line('.')) <= 0
+  if !search('\s*\\begin{', 'bncW', line('.')) 
     return 0
   endif
-  call search('\\begin{', 'cW', line('.'))
+  call search('\\begin{', 'bcW', line('.'))
 
   let start = getpos('.')
-  if searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}') <= 0
+  if !searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}') 
     return 0
   endif
   let end = getpos('.')
@@ -80,7 +81,8 @@ function! sj#tex#JoinBlock()
 endfunction
 
 function! sj#tex#SplitArgs()
-  if searchpair('[', '', ']', 'bcnW', '') <= 0
+  let lno = line('.')
+  if search('\[', 'bcnW') < lno || search('\]', 'cnW', lno + 2) < 1
     return 0
   endif
   let contents = sj#GetMotion('vi[')->trim()
@@ -95,31 +97,31 @@ function! sj#tex#SplitArgs()
 endfunction
 
 function! sj#tex#JoinArgs()
-  if searchpair('[', '', ']', 'bcnW', '') <= 0
+  let lno = line('.')
+  if search('\[', 'bcnW') < lno - 5
     return 0
   endif
-  let body = sj#GetMotion('Vi[')->trim()
+  let body = sj#GetMotion('vi[')->trim()
   if empty(body)
     return 0
   endif
+  let body = body->substitute('%[^\n]*\n\s*', '', 'g')
   let body = body->substitute('\n\s*,\|,\s*\n', ',', 'g')
   let lines = split(body, "\n")
   let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
   let lines = sj#TrimList(lines)
   let body  = sj#Trim(join(lines, ' '))
   call sj#ReplaceMotion('va[', '[' . body . ']')
+  return 1
 endfunction
 
 
 function! sj#tex#SplitCommand()
   let lno = line('.')
-  if searchpair('{', '', '}', 'bcnW', '') != lno || searchpair('\w*{', '', '}', 'ncW', '') != lno
+  if search('{.*\%#}', 'nW') > lno + 1
     return 0
   endif
-  let startno = getpos("'<")[1]
-  if startno != lno
-    return 0
-  endif
+  call search('{', 'cW', lno + 1)
 
   let contents = sj#GetMotion('vi{')->trim()
   call sj#ReplaceMotion('va{', "{%\n".contents."%\n}")
@@ -127,17 +129,20 @@ function! sj#tex#SplitCommand()
 endfunction
 
 function! sj#tex#JoinCommand()
-  if searchpair('{', '', '}', 'bnW', '') <= 0 || searchpair('\w*{', '', '}', 'ncW', '') <= 0
+  let lno = line('.')
+  if search('{', 'bcnW') < lno - 5 && search('\w*{', 'ncW', lno + 5) < 1
     return 0
   endif
-  let body = sj#GetMotion('Vi{')
+  call search('{', 'bcW', lno - 1)
+  let body = sj#GetMotion('vi{')
   if empty(body)
     return 0
   endif
   let lines = split(body, "\n")
   let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
+  let lines = lines->map({_, v -> substitute(v, '^\s*', ' ', '')})
   let lines = sj#TrimList(lines)
   let body  = sj#Trim(join(lines, ' '))
-  let body  = substitute(body, '%.*', '', '')
   call sj#ReplaceMotion('va{', '{' . body . '}')
+  return 1
 endfunction
