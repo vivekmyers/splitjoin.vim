@@ -4,10 +4,10 @@ function! sj#tex#SplitBlock()
 
   let lno = line('.')
   let start = getpos('.')
-  if searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}\zs}', 'bcW', '') < 1
+  if !searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}\zs}', 'bcW', '')
     return 0
   endif
-  call searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', '')
+  call searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', 'W', '')
   let end = getpos('.')
 
   let block = sj#GetByPosition(start, end)
@@ -21,6 +21,9 @@ function! sj#tex#SplitBlock()
   let [_match, open, body, close; _rest] = match
   let body = substitute(body, '\\\\\ *\zs'."[^ \n\r%]", "\n&", 'g')
   let body = substitute(body, "[^ \n\r%]".'\ze *\\item', "&\n", 'g')
+
+  let body = substitute(body, '\S.*\zs\\label', "\n&", 'g')
+
   let replacement = sj#Trim(open)."\n".sj#Trim(body)."\n".sj#Trim(close)
 
   call sj#ReplaceByPosition(start, end, replacement)
@@ -31,14 +34,11 @@ function! sj#tex#JoinBlock()
   let arg_pattern = '[a-zA-Z*]'
   let opts_pattern = '\%(\%({.\{-}}\)\|\%(\[.\{-}]\)\)*'
 
-  if !search('\s*\zs\\begin{', 'bncW', line('.')) 
+  if !searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}\zs}', 'bcW', '')
     return 0
   endif
-
   let start = getpos('.')
-  if !searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}') 
-    return 0
-  endif
+  call searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', 'W', '')
   let end = getpos('.')
 
   let block = sj#GetByPosition(start, end)
@@ -51,13 +51,14 @@ function! sj#tex#JoinBlock()
 
   let [_match, open, body, close; _rest] = match
 
-  let lines = split(body, '\\\\\_s\+')
+  let lines = split(body, '\s*\\\\\_s\+')
   let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
   let body = join(lines, '\\ ')
 
   if body =~ '\\item'
     let lines = sj#TrimList(split(body, '\\item'))
     let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
+    let lines = lines->map({_, v -> substitute(v, '^\s*', '', '')->substitute('\s*$', '', 'g')})
     if body =~ '^\s*\\item'
       let body = '\item '.join(lines, ' \item ')
     else
@@ -65,8 +66,16 @@ function! sj#tex#JoinBlock()
     endif
   endif
   let open = open->substitute('%.*$', '', '')
+  let spc1 = ' '
+  let spc2 = ' '
+  if body->split("\n")[0] =~ '^\s*$'
+    let spc1 = "\n"
+  endif
+  if body->split("\n")[-1] =~ '^\s*$'
+    let spc2 = "\n"
+  endif
 
-  let replacement =  sj#Trim(open)." ".sj#Trim(body)." ".sj#Trim(close)
+  let replacement =  sj#Trim(open).spc1.sj#Trim(body).spc2.sj#Trim(close)
 
   call sj#ReplaceByPosition(start, end, replacement)
   return 1
