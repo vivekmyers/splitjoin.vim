@@ -4,10 +4,10 @@ function! sj#tex#SplitBlock()
 
   let lno = line('.')
   let start = getpos('.')
-  if !searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}\zs}', 'bcW', '')
+  if !searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bcW', '')
     return 0
   endif
-  call searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', 'W', '')
+  call searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}\zs}', 'W', '')
   let end = getpos('.')
 
   let block = sj#GetByPosition(start, end)
@@ -22,7 +22,7 @@ function! sj#tex#SplitBlock()
   let body = substitute(body, '\\\\\ *\zs'."[^ \n\r%]", "\n&", 'g')
   let body = substitute(body, "[^ \n\r%]".'\ze *\\item', "&\n", 'g')
 
-  let body = substitute(body, '\S[^ \n\r%]*\zs\\label', "\n&", 'g')
+  let body = body->split("\n")->map({_, v -> substitute(v, '\S.*\zs\\label', "\n&", 'g')})->join("\n")
 
   let replacement = sj#Trim(open)."\n".sj#Trim(body)."\n".sj#Trim(close)
 
