@@ -19,7 +19,7 @@ function! sj#tex#SplitBlock()
   endif
 
   let [_match, open, body, close; _rest] = match
-  let body = substitute(body, '\\\\\ *\zs'."[^ \n\r%]", "\n&", 'g')
+  let body = substitute(body, '\\\\\s*\(\[.*\]\)\?\zs'.'\(\w\|\\\)', "\n&", 'g')
   let body = substitute(body, "[^ \n\r%]".'\ze *\\item', "&\n", 'g')
 
   let body = body->split("\n")->map({_, v -> substitute(v, '\S.*\zs\\label', "\n&", 'g')})->join("\n")
