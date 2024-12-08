@@ -2,12 +2,21 @@ function! sj#tex#SplitBlock()
   let arg_pattern = '[a-zA-Z*]'
   let opts_pattern = '\%(\%({.\{-}}\)\|\%(\[.\{-}]\)\)*'
 
+  call search('\\begin{'.arg_pattern.'*', 'bcW', line('.'))
+
   let lno = line('.')
+  if search('\S.*\\begin{', 'ncbW', line('.')) > 0
+    call search('\S.*\zs\\begin{', 'cbW', line('.'))
+    normal i
+  endif
   let start = getpos('.')
   if !searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bcW', '')
     return 0
   endif
   call searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', 'W', '')
+  if search('\zs\S', 'W', line('.')) > 0
+    normal ik$
+  endif
   let end = getpos('.')
 
   let block = sj#GetByPosition(start, end)
@@ -33,6 +42,8 @@ endfunction
 function! sj#tex#JoinBlock()
   let arg_pattern = '[a-zA-Z*]'
   let opts_pattern = '\%(\%({.\{-}}\)\|\%(\[.\{-}]\)\)*'
+
+  call search('\\begin{'.arg_pattern.'*', 'bcW', line('.'))
 
   if !searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}\zs}', 'bcW', '')
     return 0
