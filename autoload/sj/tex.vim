@@ -63,12 +63,12 @@ function! sj#tex#JoinBlock()
   let [_match, open, body, close; _rest] = match
 
   let lines = split(body, '\s*\\\\\_s\+')
-  let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
+  let lines = lines->map({_, v -> substitute(v, '%[^#\r\n]*', '', 'g')})
   let body = join(lines, '\\ ')
 
   if body =~ '\\item'
     let lines = sj#TrimList(split(body, '\\item'))
-    let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
+  let lines = lines->map({_, v -> substitute(v, '%[^#\r\n]*', '', 'g')})
     let lines = lines->map({_, v -> substitute(v, '^\s*', '', '')->substitute('\s*$', '', 'g')})
     if body =~ '^\s*\\item'
       let body = '\item '.join(lines, ' \item ')
@@ -130,6 +130,9 @@ endfunction
 
 function! sj#tex#SplitCommand()
   let lno = line('.')
+  if search('\%<.c\k*{\zs', 'cW') < 1
+    return 0
+  endif
   if searchpair('{', '', '}', 'cW') < 1
     return 0
   endif
@@ -141,6 +144,9 @@ endfunction
 
 function! sj#tex#JoinCommand()
   let lno = line('.')
+  if search('\%<.c\k*{\zs', 'cW') < 1
+    return 0
+  endif
   if searchpair('{', '', '}', 'cW') < 1
     return 0
   endif
@@ -149,7 +155,7 @@ function! sj#tex#JoinCommand()
     return 0
   endif
   let lines = split(body, "\n")
-  let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
+  let lines = lines->map({_, v -> substitute(v, '%[^#\r\n]*', '', '')})
   let lines = lines->map({_, v -> substitute(v, '^\s*', ' ', '')})
   let lines = sj#TrimList(lines)
   let body  = sj#Trim(join(lines, ' '))
