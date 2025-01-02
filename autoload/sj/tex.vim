@@ -5,8 +5,8 @@ function! sj#tex#SplitBlock()
   call search('\\begin{'.arg_pattern.'*', 'bcW', line('.'))
 
   let lno = line('.')
-  if search('\S.*\\begin{', 'ncbW', line('.')) > 0
-    call search('\S.*\zs\\begin{', 'cbW', line('.'))
+  if search('\S\s*\\begin{', 'ncbW', line('.')) > 0
+    call search('\S\s*\zs\\begin{', 'cbW', line('.'))
     normal i
   endif
   let start = getpos('.')
@@ -28,7 +28,7 @@ function! sj#tex#SplitBlock()
   endif
 
   let [_match, open, body, close; _rest] = match
-  let body = substitute(body, '\\\\\s*\(\[.*\]\)\?\zs'.'\(\w\|\\\)', "\n&", 'g')
+  let body = substitute(body, '\\\\\s*\%(\[[a-z0-9]*\]\)\?\zs'.'\(\S\|\\\)', "\n&", 'g')
   let body = substitute(body, "[^ \n\r%]".'\ze *\\item', "&\n", 'g')
 
   let body = body->split("\n")->map({_, v -> substitute(v, '\S.*\zs\\label', "\n&", 'g')})->join("\n")
