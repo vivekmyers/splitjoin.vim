@@ -7,7 +7,7 @@ function! sj#tex#SplitBlock()
   let lno = line('.')
   if search('\S\s*\\begin{', 'ncbW', line('.')) > 0
     call search('\S\s*\zs\\begin{', 'cbW', line('.'))
-    normal i
+    silent! s/\%.c/\r/
   endif
   let start = getpos('.')
   if !searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bcW', '')
@@ -15,7 +15,7 @@ function! sj#tex#SplitBlock()
   endif
   call searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', 'W', '')
   if search('\zs\S', 'W', line('.')) > 0
-    normal ik$
+    silent! s/\%.c/\r/
   endif
   let end = getpos('.')
 
@@ -133,7 +133,7 @@ endfunction
 
 function! sj#tex#SplitCommand()
   let lno = line('.')
-  if search('\%<.c.\k*{\zs', 'cW') < 1
+  if search('\%<.c.\%(\k\|[{}]\)*{\zs', 'cW') < 1
     return 0
   endif
   if searchpair('{', '', '}', 'cW') < 1
@@ -141,6 +141,12 @@ function! sj#tex#SplitCommand()
   endif
 
   let contents = sj#GetMotion('vi{')->trim()
+  let contents = contents->substitute('[,.;?]', ",%\n", 'g')
+  let contents = contents->substitute('\\cr', "&\n", 'g')
+  let contents = contents->substitute('\\\\', "&\n", 'g')
+  let contents = contents->split('\n')->filter({_, v -> match(v, '^[^%]*[^ %\t]') > -1})->join("\n")
+  let contents = contents->substitute('%*$', '', '')
+
   call sj#ReplaceMotion('va{', "{%\n".contents."%\n}")
   return 1
 endfunction
