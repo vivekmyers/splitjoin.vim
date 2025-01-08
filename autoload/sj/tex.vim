@@ -8,14 +8,16 @@ function! sj#tex#SplitBlock()
   if search('\S\s*\\begin{', 'ncbW', line('.')) > 0
     call search('\S\s*\zs\\begin{', 'cbW', line('.'))
     silent! s/\%.c/\r/
+    call search('\\begin{'.arg_pattern.'*', 'cW', line('.') + 1)
   endif
   let start = getpos('.')
   if !searchpair('\\begin{'.arg_pattern.'\{-}}'.opts_pattern, '', '\\end{'.arg_pattern.'\{-}}', 'bcW', '')
     return 0
   endif
   call searchpair('\\begin{'.arg_pattern.'\{-}}', '', '\\end{'.arg_pattern.'\{-}\zs}', 'W', '')
-  if search('\zs\S', 'W', line('.')) > 0
-    silent! s/\%.c/\r/
+  if getline('.') =~ '\\end{'.arg_pattern.'\{-}}\s*\S'
+    exe 's/\\end{'.arg_pattern.'\{-}}\s*\zs\(\S\)/\r\1/'
+    call search('\\end{'.arg_pattern.'\{-}\zs}', 'bcW', line('.') - 1)
   endif
   let end = getpos('.')
 
@@ -97,7 +99,7 @@ endfunction
 
 function! sj#tex#SplitArgs()
   let lno = line('.')
-  if !search('\%.c.\k*\[', 'cW')
+  if !search('\%.c.\?\k*\[', 'cW')
     return 0
   endif
   let contents = sj#GetMotion('vi[')->trim()
