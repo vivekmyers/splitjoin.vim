@@ -97,7 +97,7 @@ endfunction
 
 function! sj#tex#SplitArgs()
   let lno = line('.')
-  if searchpair('\[', '', '\]', 'cnW') < 1
+  if !search('\%.c.\k*\[', 'cW')
     return 0
   endif
   let contents = sj#GetMotion('vi[')->trim()
@@ -113,7 +113,7 @@ endfunction
 
 function! sj#tex#JoinArgs()
   let lno = line('.')
-  if searchpair('\[', '', '\]', 'cnW') < 1
+  if !searchpair('\[', '', '\]', 'cnW')
     return 0
   endif
   let body = sj#GetMotion('vi[')->trim()
