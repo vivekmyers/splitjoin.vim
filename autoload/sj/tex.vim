@@ -81,7 +81,7 @@ function! sj#tex#JoinBlock()
       let body = join(lines, ' \item ')
     endif
   endif
-  let body = body->substitute('\_s*\(\\label{[^{}]*}\)\_s*', '\1', 'g')
+  let body = body->substitute('\_s*\(\\label{[^{}]*}\)\_s*', ' \1', 'g')
 
   let open = open->substitute('%.*$', '', '')
   let spc1 = ' '
@@ -149,7 +149,7 @@ endfunction
 
 function! sj#tex#SplitCommand()
   let lno = line('.')
-  if search('\%<.c.\%(\k\|[{}]\)*{\zs', 'cW', lno) < 1
+  if search('\%(^\|\%<.c\).\%(\k\|[{}]\)*{\zs', 'cW', lno) < 1
     return 0
   endif
   if searchpair('{', '', '}', 'cW') < 1
@@ -169,7 +169,7 @@ endfunction
 
 function! sj#tex#JoinCommand()
   let lno = line('.')
-  if search('\%<.c.\k*{\zs', 'cW', lno) < 1
+  if search('\%(^\|\%<.c\).\%(\k\|[{}]\)*{\zs', 'cW', lno) < 1
     return 0
   endif
   call search('.', 'W')
