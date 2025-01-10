@@ -8,4 +8,5 @@ let b:splitjoin_join_callbacks = [
             \ 'sj#tex#JoinArgs',
             \ 'sj#tex#JoinBlock',
             \ 'sj#tex#JoinCommand',
+            \ 'sj#tex#JoinComment',
             \ ]

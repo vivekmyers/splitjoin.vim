@@ -30,7 +30,7 @@ function! sj#tex#SplitBlock()
   endif
 
   let [_match, open, body, close; _rest] = match
-  let body = substitute(body, '\\\\\s*\%(\[[a-z0-9]*\]\)\?\zs'.'\(\S\|\\\)', "\n&", 'g')
+  let body = substitute(body, '\\\\\%(\[[a-z0-9]*\]\)\?\zs[ \t]*[^ \n\r%]', "\n&", 'g')
   let body = substitute(body, "[^ \n\r%]".'\ze *\\item', "&\n", 'g')
 
   let body = body->split("\n")->map({_, v -> substitute(v, '\S.*\zs\\label', "\n&", 'g')})->join("\n")
@@ -81,6 +81,8 @@ function! sj#tex#JoinBlock()
       let body = join(lines, ' \item ')
     endif
   endif
+  let body = body->substitute('\_s*\(\\label{[^{}]*}\)\_s*', '\1', 'g')
+
   let open = open->substitute('%.*$', '', '')
   let spc1 = ' '
   let spc2 = ' '
@@ -99,7 +101,7 @@ endfunction
 
 function! sj#tex#SplitArgs()
   let lno = line('.')
-  if !search('\%.c.\?\k*\[', 'cW')
+  if !search('\%.c.\?\k*\[', 'cW', lno)
     return 0
   endif
   let contents = sj#GetMotion('vi[')->trim()
@@ -132,10 +134,22 @@ function! sj#tex#JoinArgs()
   return 1
 endfunction
 
+function! sj#tex#JoinComment()
+  let lno = line('.')
+  if !search('%', 'cW', lno)
+    normal J
+    return 1
+  endif
+  normal "zdg_
+  let @z = " ".@z->trim()
+  normal J$"zp
+  return 1
+endfunction
+
 
 function! sj#tex#SplitCommand()
   let lno = line('.')
-  if search('\%<.c.\%(\k\|[{}]\)*{\zs', 'cW') < 1
+  if search('\%<.c.\%(\k\|[{}]\)*{\zs', 'cW', lno) < 1
     return 0
   endif
   if searchpair('{', '', '}', 'cW') < 1
@@ -155,7 +169,7 @@ endfunction
 
 function! sj#tex#JoinCommand()
   let lno = line('.')
-  if search('\%<.c.\k*{\zs', 'cW') < 1
+  if search('\%<.c.\k*{\zs', 'cW', lno) < 1
     return 0
   endif
   call search('.', 'W')
