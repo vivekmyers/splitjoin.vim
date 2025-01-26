@@ -157,7 +157,7 @@ function! sj#tex#SplitCommand()
   endif
 
   let contents = sj#GetMotion('vi{')->trim()
-  let contents = contents->substitute('\([,.;?]\)', "\\1%\n", 'g')
+  let contents = contents->substitute('\([,.;?]\)\s\+', "\\1\n", 'g')
   let contents = contents->substitute('\\cr', "&\n", 'g')
   let contents = contents->substitute('\\\\', "&\n", 'g')
   let contents = contents->split('\n')->filter({_, v -> match(v, '^[^%]*[^ %\t]') > -1})->join("\n")
