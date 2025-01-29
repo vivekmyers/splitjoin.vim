@@ -143,6 +143,7 @@ function! sj#tex#JoinComment()
   normal "zdg_
   let @z = " ".@z->trim()
   normal J$"zp
+  silent! s/%\(\s*%\)*\s*$/%/e
   return 1
 endfunction
 
