@@ -10,7 +10,22 @@ endfunction
 
 function! sj#argparser#sh#Process() dict
   while !self.Finished()
-    if self.body[0] == ';'
+    if self.body =~ '^;\s*\(then\|do|else\)'
+      call self.PushChar()
+      continue
+    elseif self.body =~ '^\(then\|else\)'
+      call self.PushChar()
+      call self.PushChar()
+      call self.PushChar()
+      call self.PushChar()
+      call self.PushArg()
+      continue
+    elseif self.body =~ '^do'
+      call self.PushChar()
+      call self.PushChar()
+      call self.PushArg()
+      continue
+    elseif self.body[0] == ';'
       call self.PushArg()
       call self.Next()
       continue

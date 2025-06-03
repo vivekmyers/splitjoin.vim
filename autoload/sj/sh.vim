@@ -26,8 +26,8 @@ function! sj#sh#JoinWithSemicolon()
     return 0
   endif
 
-  call sj#Keeppatterns('s/;\=\s*\%(then\s*\|do\s*\)\@<!\n\_s*/; /e')
-  call sj#Keeppatterns('s/\%(then\|do\)\zs\_s*\n\_s*/ /e')
+  call sj#Keeppatterns('s/;\=\s*\%(then\s*\|do\s*\|else\s*\)\@<!\n\_s*/; /e')
+  call sj#Keeppatterns('s/\%(then\|do\|else\)\zs\_s*\n\_s*/ /e')
   return 1
 endfunction
 
