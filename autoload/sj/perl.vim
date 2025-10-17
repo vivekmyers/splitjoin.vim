@@ -228,6 +228,50 @@ function! sj#perl#JoinWordList()
   return 1
 endfunction
 
+function! sj#perl#SplitBraces()
+  let [from, to] = sj#LocateBracesOnLine('{', '}')
+
+  if from < 0 && to < 0
+    return 0
+  endif
+
+  let body = sj#GetMotion('Va{')
+  let body = substitute(body, '^{\s*\(.\{-}\)\s*}$', "{\n\\1\n}", '')
+
+  if sj#settings#Read('perl_brace_on_same_line')
+    let body = substitute(body, '\n\s*}', '}', '')
+  else
+    let body = substitute(body, '\n\s*}', '\n}', '')
+  endif
+
+  call sj#ReplaceMotion('Va{', body)
+
+  return 1
+endfunction
+
+
+function! sj#perl#JoinBraces()
+  let line = getline('.')
+
+  if search('{\s*$', 'c', line('.')) <= 0
+    return 0
+  endif
+
+  let body = sj#GetMotion('Vi{')
+  let body = substitute(body, '^\s*{\s*\(.\{-}\)\s*}\s*$', '\1', '')
+
+  if sj#settings#Read('perl_brace_on_same_line')
+    let body = substitute(body, '\n\s*', ' ', 'g')
+    let body = substitute(body, '\n\s*}', '}', '')
+  else
+    let body = substitute(body, '\n\s*', "\n", 'g')
+    let body = substitute(body, '\n\s*}', "\n}", '')
+  endif
+
+  call sj#ReplaceMotion('Va{', '{'.body.'}')
+  return 1
+endfunction
+
 function! s:Split(pattern, replacement_pattern)
   let line = getline('.')
 
