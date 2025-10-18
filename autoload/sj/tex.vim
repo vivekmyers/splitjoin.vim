@@ -150,7 +150,7 @@ endfunction
 
 function! sj#tex#SplitCommand()
   let lno = line('.')
-  if search('\%(^\|\%<.c\).\%(\k\|[{}]\)*{\zs', 'cW', lno) < 1
+  if search('\%(^\|\%<.c\).\?.\?\%(\k\|[{}]\|\[\k*\]\|{[^{}]\{0,10\}}\)*{\zs', 'cW', lno) < 1
     return 0
   endif
   if searchpair('{', '', '}', 'cW') < 1
@@ -158,8 +158,14 @@ function! sj#tex#SplitCommand()
   endif
 
   let contents = sj#GetMotion('vi{')->trim()
-  let contents = contents->substitute('\([,.;?]\)\s\+', "\\1\n", 'g')
-  let contents = contents->substitute('\\cr', "&\n", 'g')
+  let itempat = '\%(^\|\n\)\%([^\n\[{(]\|\[[^\n\[\]]*\]\|{[^\n{}]*}\)*\zs\([,.;?]\)'
+  while match(contents, itempat.' \+') > -1
+    let contents = contents->substitute(itempat.' \+', "\\1\n", '')
+  endwhile
+  while match(contents, itempat.'[^\n%]') > -1
+    let contents = contents->substitute(itempat.'\ze[^\n%]', "\\1%\n", '')
+  endwhile
+  let contents = contents->substitute('\\cr\>', "&\n", 'g')
   let contents = contents->substitute('\\\\', "&\n", 'g')
   let contents = contents->split('\n')->filter({_, v -> match(v, '^[^%]*[^ %\t]') > -1})->join("\n")
   let contents = contents->substitute('%*$', '', '')
@@ -170,7 +176,7 @@ endfunction
 
 function! sj#tex#JoinCommand()
   let lno = line('.')
-  if search('\%(^\|\%<.c\).\%(\k\|[{}]\)*{\zs', 'cW', lno) < 1
+  if search('\%(^\|\%<.c\).\?.\?\%(\k\|[{}]\|\[\k*\]\|{[^{}]\{0,10\}}\)*{\zs', 'cW', lno) < 1
     return 0
   endif
   call search('.', 'W')
@@ -182,9 +188,8 @@ function! sj#tex#JoinCommand()
     return 0
   endif
   let lines = split(body, "\n")
-  let lines = lines->map({_, v -> substitute(v, '%[^#\r\n]*', '', '')})
-  let lines = sj#TrimList(lines)
-  let body  = sj#Trim(join(lines, ' '))
+  let lines = lines->map({_, v -> substitute(sj#Trim(v).' ', '\%([^\\]\|^\)\zs%.*$', '', '')})
+  let body  = sj#Trim(join(lines, ''))
   call sj#ReplaceMotion('va{', '{' . body . '}')
   return 1
 endfunction
