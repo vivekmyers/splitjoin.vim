@@ -59,7 +59,13 @@ function! sj#tex#JoinBlock()
 
   let block = sj#GetByPosition(start, end)
 
-  let pattern = '^\(\\begin{'.arg_pattern.'\{-}}'.opts_pattern.'\)\_s\+\(.\{-}\)\_s\+\(\\end{'.arg_pattern.'\{-}}\)$'
+  let pattern =
+        \ '^\(\\begin{'..arg_pattern..'\{-}}'..
+        \ opts_pattern..
+        \ '\)\_s\+\(.\{-}\)\_s\+\(\\end{'..
+        \ arg_pattern..
+        \ '\{-}}\)$'
+
   let match = matchlist(block, pattern)
   if empty(match)
     return 0

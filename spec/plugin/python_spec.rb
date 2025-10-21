@@ -6,6 +6,9 @@ describe "python" do
   before :each do
     vim.set(:expandtab)
     vim.set(:shiftwidth, 4)
+
+    vim.command 'unlet! b:splitjoin_python_import_style'
+    vim.command 'unlet! b:splitjoin_python_brackets_on_separate_lines'
   end
 
   specify "dictionaries" do
@@ -61,19 +64,71 @@ describe "python" do
     assert_file_contents 'spam = [1, [2, 3], 4]'
   end
 
-  specify "imports" do
-    set_file_contents 'from foo import bar, baz'
+  specify "function arguments" do
+    set_file_contents 'spam = callable(one, [2, 3], four)'
 
+    vim.search 'callable'
     split
 
     assert_file_contents <<~EOF
-      from foo import bar,\\
-              baz
+      spam = callable(one,
+                      [2, 3],
+                      four)
     EOF
 
     join
 
-    assert_file_contents 'from foo import bar, baz'
+    assert_file_contents 'spam = callable(one, [2, 3], four)'
+  end
+
+  specify "imports" do
+    set_file_contents <<~EOF
+      def surrounding_function():
+          from foo import bar, baz
+    EOF
+
+    vim.search('from foo')
+    split
+
+    assert_file_contents <<~EOF
+      def surrounding_function():
+          from foo import bar,\\
+                  baz
+    EOF
+
+    join
+    assert_file_contents <<~EOF
+      def surrounding_function():
+          from foo import bar, baz
+    EOF
+
+    vim.command 'let b:splitjoin_python_import_style = "round_brackets"'
+    split
+
+    assert_file_contents <<~EOF
+      def surrounding_function():
+          from foo import (bar,
+                           baz)
+    EOF
+
+    join
+    assert_file_contents <<~EOF
+      def surrounding_function():
+          from foo import bar, baz
+    EOF
+
+    vim.command 'let b:splitjoin_python_brackets_on_separate_lines = 1'
+    split
+
+    assert_file_contents <<~EOF
+      def surrounding_function():
+          from foo import (
+              bar,
+              baz
+          )
+    EOF
+
+    join
   end
 
   specify "statements" do
@@ -222,6 +277,15 @@ describe "python" do
     assert_file_contents <<~EOF
       out = ("one", {"two": "three"}, "four")
     EOF
+
+    vim.search('two')
+    split
+
+    assert_file_contents <<~EOF
+      out = ("one", {
+          "two": "three"
+          }, "four")
+    EOF
   end
 
   specify "tuple within dictionary" do
@@ -247,6 +311,30 @@ describe "python" do
     EOF
   end
 
+  specify "tuple within tuple" do
+    set_file_contents <<~EOF
+      out = Foo(Bar(baz, bla))
+    EOF
+
+    vim.command 'let b:splitjoin_python_brackets_on_separate_lines = 1'
+    vim.search('baz')
+    split
+
+    assert_file_contents <<~EOF
+      out = Foo(Bar(
+          baz,
+          bla
+          ))
+    EOF
+
+    vim.search('Bar\zs(')
+    join
+
+    assert_file_contents <<~EOF
+      out = Foo(Bar(baz, bla))
+    EOF
+  end
+
   specify "list comprehensions" do
     pending "Old version on CI" if ENV['CI']
 
@@ -269,6 +357,48 @@ describe "python" do
 
     assert_file_contents <<~EOF
       result = [x * y for x in range(1, 10) for y in range(10, 20) if x != y]
+    EOF
+  end
+
+  specify "split prioritization based on cursor position" do
+    set_file_contents "spam = {'spam': [1, 2, 3], 'spam, spam': mix('eggs', 'ham')}"
+
+    vim.search('{')
+    split
+
+    assert_file_contents <<~EOF
+      spam = {
+              'spam': [1, 2, 3],
+              'spam, spam': mix('eggs', 'ham')
+              }
+    EOF
+    join
+
+    vim.search('[')
+    split
+
+    assert_file_contents <<~EOF
+      spam = {'spam': [1,
+                       2,
+                       3], 'spam, spam': mix('eggs', 'ham')}
+    EOF
+    join
+
+    vim.search('mix(')
+    split
+
+    assert_file_contents <<~EOF
+      spam = {'spam': [1, 2, 3], 'spam, spam': mix('eggs',
+                                                   'ham')}
+    EOF
+    join
+
+    vim.search('(')
+    split
+
+    assert_file_contents <<~EOF
+      spam = {'spam': [1, 2, 3], 'spam, spam': mix('eggs',
+                                                   'ham')}
     EOF
   end
 
@@ -431,6 +561,30 @@ describe "python" do
             two
         """, three)
       EOF
+    end
+
+    it "handles multiple strings on one line " do
+      set_file_contents 'string = "foo" + "bar"'
+
+      vim.search '"foo'
+      split
+
+      assert_file_contents <<~EOF
+        string = """
+            foo
+        """ + "bar"
+      EOF
+      join
+
+      vim.search '"bar'
+      split
+
+      assert_file_contents <<~EOF
+        string = "foo" + """
+            bar
+        """
+      EOF
+      join
     end
   end
 end
