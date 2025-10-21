@@ -1,13 +1,9 @@
 " Wrap them in conditions to avoid messing up erb
 
-if !exists('b:splitjoin_split_callbacks')
-  let b:splitjoin_split_callbacks = [
-        \ 'sj#html#SplitTags'
-        \ ]
-endif
+let b:splitjoin_split_callbacks = [
+      \ 'sj#html#SplitTags'
+      \ ]
 
-if !exists('b:splitjoin_join_callbacks')
-  let b:splitjoin_join_callbacks = [
-        \ 'sj#html#JoinTags'
-        \ ]
-endif
+let b:splitjoin_join_callbacks = [
+      \ 'sj#html#JoinTags'
+      \ ]
