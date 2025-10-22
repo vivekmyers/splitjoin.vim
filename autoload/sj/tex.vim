@@ -1,3 +1,5 @@
+let s:tex_comment = '[^\\]\%(\\\\\)*\zs%\(.*\)$'
+
 function! sj#tex#SplitBlock()
   let arg_pattern = '[a-zA-Z*]'
   let opts_pattern = '\%(\%({.\{-}}\)\|\%(\[.\{-}]\)\)*'
@@ -133,7 +135,7 @@ function! sj#tex#JoinArgs()
   " let body = body->substitute('%[^\n]*\n\s*', '', 'g')
   " let body = body->substitute('\n\s*,\|,\s*\n', ',', 'g')
   let lines = split(body, "\n")
-  let lines = lines->map({_, v -> substitute(sj#Trim(v)." ", '[^\\]\(\\\\\)*\zs%.*$', '', '')})
+  let lines = lines->map({_, v -> substitute(sj#Trim(v)." ", s:tex_comment, '', '')})
   let body  = sj#Trim(join(lines, ''))
   call sj#ReplaceMotion('va[', '[' . body . ']')
   return 1
@@ -141,13 +143,17 @@ endfunction
 
 function! sj#tex#JoinComment()
   let lno = line('.')
-  if !search('%', 'cW', lno)
-    normal J
+  normal! 0
+  if !search(s:tex_comment, 'cW', lno)
+    normal! J
     return 1
   endif
-  normal "zdg_
-  let @z = " ".@z->trim()
-  normal J$"zp
+  normal! "zdg_
+  normal! J0
+  if !search(s:tex_comment, 'cW', line('.'))
+    exe "normal! $a %\e"
+  endif
+  exe "normal! \"zPlcw\<space>"
   silent! s/%\(\s*%\)*\s*$/%/e
   return 1
 endfunction
