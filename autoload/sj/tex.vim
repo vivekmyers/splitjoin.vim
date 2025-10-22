@@ -123,19 +123,18 @@ endfunction
 
 function! sj#tex#JoinArgs()
   let lno = line('.')
-  if !searchpair('\[', '', '\]', 'cnW')
+  if !searchpair('\[', '', '\]', 'cnbW', "", lno - 1)
     return 0
   endif
   let body = sj#GetMotion('vi[')->trim()
   if empty(body)
     return 0
   endif
-  let body = body->substitute('%[^\n]*\n\s*', '', 'g')
-  let body = body->substitute('\n\s*,\|,\s*\n', ',', 'g')
+  " let body = body->substitute('%[^\n]*\n\s*', '', 'g')
+  " let body = body->substitute('\n\s*,\|,\s*\n', ',', 'g')
   let lines = split(body, "\n")
-  let lines = lines->map({_, v -> substitute(v, '%.*$', '', '')})
-  let lines = sj#TrimList(lines)
-  let body  = sj#Trim(join(lines, ' '))
+  let lines = lines->map({_, v -> substitute(sj#Trim(v)." ", '[^\\]\(\\\\\)*\zs%.*$', '', '')})
+  let body  = sj#Trim(join(lines, ''))
   call sj#ReplaceMotion('va[', '[' . body . ']')
   return 1
 endfunction
@@ -164,7 +163,7 @@ function! sj#tex#SplitCommand()
   endif
 
   let contents = sj#GetMotion('vi{')->trim()
-  let itempat = '\%(^\|\n\)\%([^\n\[{(]\|\[[^\n\[\]]*\]\|{[^\n{}]*}\)*\zs\([,.;?]\)'
+  let itempat = '\%(^\|\n\)\%([^\n\[{(]\|\[[^\n\[\]]*\]\|{[^\n{}]*}\)*\zs\(\([.;?]\)\ze\%(\s\|$\)\|,\)'
   while match(contents, itempat.' \+') > -1
     let contents = contents->substitute(itempat.' \+', "\\1\n", '')
   endwhile
