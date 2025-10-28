@@ -161,7 +161,7 @@ endfunction
 
 function! sj#tex#SplitCommand()
   let lno = line('.')
-  if search('\%(^\|\%<.c\).\?.\?\%(\k\|[{}]\|\[\k*\]\|{[^{}]\{0,10\}}\)*{\zs', 'cW', lno) < 1
+  if search('\%(^\|\%<.c\).\?.\?\%(\k\|\[\k*\]\|{[^{}]\{0,10\}}\)*{\zs', 'cW', lno) < 1
     return 0
   endif
   if searchpair('{', '', '}', 'cW') < 1
